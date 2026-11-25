@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THE GAUNTLET — Intense Football Trivia</title>
+  <style>
+    :root {
+      --bg-deep: #060b14;
+      --bg-card: #0e1726;
+      --bg-elevated: #162238;
+      --pitch-green: #00e676;
+      --pitch-dark: #00a854;
+      --amber: #ffb300;
+      --red-card: #ff2e4c;
+      --cyan: #00d4ff;
+      --text-main: #f3f7ff;
+      --text-muted: #8a9bb8;
+      --border: rgba(255, 255, 255, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #10253f 0%, var(--bg-deep) 65%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* Subtle stadium pitch lines overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 230, 118, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 230, 118, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 680px;
+      background: rgba(14, 23, 38, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(0, 230, 118, 0.06);
+      backdrop-filter: blur(12px);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .app.danger-pulse {
+      border-color: rgba(255, 46, 76, 0.75);
+      box-shadow: 0 0 35px rgba(255, 46, 76, 0.35);
+      animation: heartbeat 0.7s infinite alternate;
+    }
+
+    @keyframes heartbeat {
+      from { transform: scale(1); }
+      to { transform: scale(1.007); }
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      font-size: 1rem;
+      text-transform: uppercase;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, var(--pitch-green), var(--cyan));
+      color: #03120b;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+
+    .icon-btn {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: #20314f;
+    }
+
+    /* Screens */
+    .screen { display: none; }
+    .screen.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Start Screen */
+    .hero {
+      text-align: center;
+      padding: 12px 0 20px;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.9rem, 5vw, 2.7rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #ffffff, var(--pitch-green));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 500px;
+      margin: 0 auto 22px;
+      line-height: 1.5;
+    }
+
+    .tier-preview {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tier-chip {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 0.72rem;
+    }
+
+    .tier-chip strong {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 3px;
+      color: var(--pitch-green);
+    }
+
+    .tier-chip.t4 strong { color: var(--amber); }
+    .tier-chip.t5 strong { color: var(--red-card); }
+
+    .rules-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .rules-box div strong {
+      color: var(--text-main);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .best-score-banner {
+      display: inline-block;
+      background: rgba(255, 179, 0, 0.12);
+      border: 1px solid rgba(255, 179, 0, 0.35);
+      color: var(--amber);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--pitch-green), #00c853);
+      color: #03150b;
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0, 230, 118, 0.25);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(0, 230, 118, 0.35);
+    }
+
+    .primary-btn:active { transform: translateY(0); }
+
+    /* Level Splash Screen */
+    .level-splash {
+      text-align: center;
+      padding: 46px 16px;
+    }
+
+    .splash-tag {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--pitch-green);
+    }
+
+    .level-splash h2 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .level-splash p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* HUD */
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-elevated);
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+
+    .hud-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .level-pill {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--pitch-green);
+    }
+
+    .q-progress {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .cards-display {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,0,0,0.25);
+      padding: 6px 10px;
+      border-radius: 10px;
+    }
+
+    .card-slot {
+      width: 16px;
+      height: 22px;
+      border-radius: 3px;
+      border: 1px dashed rgba(255,255,255,0.2);
+      transition: 0.25s;
+    }
+
+    .card-slot.yellow {
+      background: var(--amber);
+      border: 1px solid #ffe082;
+      box-shadow: 0 0 10px rgba(255, 179, 0, 0.6);
+      transform: rotate(-6deg);
+    }
+
+    .card-slot.red {
+      background: var(--red-card);
+      border: 1px solid #ff8a9b;
+      box-shadow: 0 0 12px rgba(255, 46, 76, 0.8);
+      transform: rotate(6deg);
+    }
+
+    .hud-right {
+      text-align: right;
+    }
+
+    .score-val {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--text-main);
+    }
+
+    .streak-val {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--amber);
+    }
+
+    /* Timer */
+    .timer-wrap {
+      margin-bottom: 16px;
+    }
+
+    .timer-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+
+    .timer-meta .seconds {
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-track {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .timer-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--pitch-green), var(--cyan));
+      transition: width 0.05s linear, background 0.3s ease;
+    }
+
+    .timer-fill.warn { background: linear-gradient(90deg, var(--amber), #ff6d00); }
+    .timer-fill.danger { background: var(--red-card); }
+
+    /* Question */
+    .question-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .q-category {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(0, 212, 255, 0.1);
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .q-text {
+      font-size: clamp(1.1rem, 3vw, 1.32rem);
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    /* Answers */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .opt-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      text-align: left;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 14px 16px;
+      border-radius: 13px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s, background 0.15s, border-color 0.15s, opacity 0.2s;
+    }
+
+    .opt-btn:hover:not(:disabled) {
+      background: #1e2f4d;
+      border-color: rgba(0, 230, 118, 0.5);
+      transform: translateX(3px);
+    }
+
+    .opt-btn:disabled { cursor: default; }
+
+    .opt-key {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .opt-btn.correct {
+      background: rgba(0, 230, 118, 0.2);
+      border-color: var(--pitch-green);
+      color: #ffffff;
+    }
+
+    .opt-btn.correct .opt-key {
+      background: var(--pitch-green);
+      color: #03150b;
+    }
+
+    .opt-btn.wrong {
+      background: rgba(255, 46, 76, 0.22);
+      border-color: var(--red-card);
+    }
+
+    .opt-btn.wrong .opt-key {
+      background: var(--red-card);
+      color: #ffffff;
+    }
+
+    .opt-btn.eliminated {
+      opacity: 0.22;
+      text-decoration: line-through;
+      pointer-events: none;
+    }
+
+    /* Feedback Strip */
+    .feedback-strip {
+      min-height: 46px;
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .feedback-strip.show { opacity: 1; }
+    .feedback-strip.ok {
+      background: rgba(0, 230, 118, 0.14);
+      border: 1px solid rgba(0, 230, 118, 0.4);
+      color: #9effc8;
+    }
+    .feedback-strip.bad {
+      background: rgba(255, 46, 76, 0.15);
+      border: 1px solid rgba(255, 46, 76, 0.45);
+      color: #ffb3be;
+    }
+
+    /* Lifelines */
+    .lifelines {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .life-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 10px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+      text-align: center;
+    }
+
+    .life-btn span {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .life-btn:hover:not(:disabled) {
+      border-color: var(--cyan);
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    .life-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* End Screen */
+    .end-box {
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .end-badge {
+      font-size: 3rem;
+      margin-bottom: 8px;
+    }
+
+    .end-title {
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .end-sub {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .stat-card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-card .val {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: var(--text-main);
+    }
+
+    @media (max-width: 520px) {
+      .app { padding: 16px; }
+      .tier-preview { grid-template-columns: repeat(2, 1fr); }
+      .tier-preview .tier-chip:last-child { grid-column: span 2; }
+      .hud { grid-template-columns: 1fr 1fr; }
+      .cards-display { grid-column: span 2; justify-content: center; order: 3; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="app" id="appCard">
+    <div class="top-bar">
+      <div class="brand">
+        <span class="brand-badge">90+</span>
+        <span>THE GAUNTLET</span>
+      </div>
+      <button class="icon-btn" id="soundToggle" title="Toggle Sound">🔊 Sound ON</button>
+    </div>
+
+    <!-- START SCREEN -->
+    <section class="screen active" id="startScreen">
+      <div class="hero">
+        <h1>SURVIVE THE FOOTBALL GAUNTLET</h1>
+        <p>Every level gets faster, smarter, and more ruthless. Can you survive all 5 tiers without picking up a Red Card?</p>
+        <div class="best-score-banner" id="bestBanner">🏆 Personal Best: 0 pts</div>
+      </div>
+
+      <div class="tier-preview">
+        <div class="tier-chip"><strong>LVL 1</strong>Kickoff<br>15s · 1x</div>
+        <div class="tier-chip"><strong>LVL 2</strong>Derby Day<br>12s · 1.5x</div>
+        <div class="tier-chip"><strong>LVL 3</strong>Champions<br>10s · 2x</div>
+        <div class="tier-chip t4"><strong>LVL 4</strong>Extra Time<br>8s · 3x</div>
+        <div class="tier-chip t5"><strong>LVL 5</strong>Sudden Death<br>6s · 5x</div>
+      </div>
+
+      <div class="rules-box">
+        <div><strong>🟨 3-Strike Discipline</strong>2 Yellow Cards are warnings. A 3rd mistake = Red Card &amp; Sent Off!</div>
+        <div><strong>⚡ Speed + Streaks</strong>Answer fast to earn time bonuses and stack streak multipliers.</div>
+        <div><strong>📺 3 Tactical Lifelines</strong>Use VAR (50/50), +8s Injury Time, or a Sub wisely—once per match.</div>
+      </div>
+
+      <button class="primary-btn" id="startBtn">Kick Off Match</button>
+    </section>
+
+    <!-- LEVEL INTRO SPLASH -->
+    <section class="screen" id="splashScreen">
+      <div class="level-splash">
+        <div class="splash-tag" id="splashTag">LEVEL 1</div>
+        <h2 id="splashTitle">KICKOFF</h2>
+        <p id="splashSub">Clock: 15s · Multiplier: 1x</p>
+      </div>
+    </section>
+
+    <!-- GAMEPLAY SCREEN -->
+    <section class="screen" id="gameScreen">
+      <div class="hud">
+        <div class="hud-left">
+          <div class="level-pill" id="hudLevel">LVL 1 · KICKOFF</div>
+          <div class="q-progress" id="hudProgress">Question 1 of 15</div>
+        </div>
+
+        <div class="cards-display" title="3 Mistakes = Red Card">
+          <div class="card-slot" id="c1"></div>
+          <div class="card-slot" id="c2"></div>
+          <div class="card-slot" id="c3"></div>
+        </div>
+
+        <div class="hud-right">
+          <div class="score-val" id="hudScore">0</div>
+          <div class="streak-val" id="hudStreak">Streak: 0</div>
+        </div>
+      </div>
+
+      <div class="timer-wrap">
+        <div class="timer-meta">
+          <span id="timerStatus">MATCH CLOCK</span>
+          <span class="seconds" id="timerText">15.0s</span>
+        </div>
+        <div class="timer-track">
+          <div class="timer-fill" id="timerFill"></div>
+        </div>
+      </div>
+
+      <div class="question-box">
+        <div class="q-category" id="qCategory">WORLD CUP</div>
+        <div class="q-text" id="qText">Loading question...</div>
+      </div>
+
+      <div class="options-grid" id="optionsGrid"></div>
+
+      <div class="feedback-strip" id="feedbackStrip">
+        <span id="feedbackMsg"></span>
+      </div>
+
+      <div class="lifelines">
+        <button class="life-btn" id="lifeVar">📺 VAR 50/50<span>Cut 2 wrong</span></button>
+        <button class="life-btn" id="lifeTime">⏱️ Injury Time<span>+8 seconds</span></button>
+        <button class="life-btn" id="lifeSub">🔄 Tactical Sub<span>Swap question</span></button>
+      </div>
+    </section>
+
+    <!-- END SCREEN -->
+    <section class="screen" id="endScreen">
+      <div class="end-box">
+        <div class="end-badge" id="endBadge">🏆</div>
+        <h2 class="end-title" id="endTitle">FULL TIME!</h2>
+        <p class="end-sub" id="endSub">Scout Rank: Champions League Icon</p>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">Final Score</div>
+            <div class="val" id="statScore">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Tier Reached</div>
+            <div class="val" id="statLevel">Level 1</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Accuracy</div>
+            <div class="val" id="statAccuracy">0%</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Best Streak</div>
+            <div class="val" id="statStreak">0</div>
+          </div>
+        </div>
+
+        <button class="primary-btn" id="replayBtn">Play Again</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ==========================================
+    // 1. LEVEL CONFIGURATION & QUESTION BANK
+    // ==========================================
+    const LEVELS = [
+      { level: 1, name: "KICKOFF", time: 15, mult: 1.0, desc: "Warm up. Don't get complacent.", color: "#00e676" },
+      { level: 2, name: "DERBY DAY", time: 12, mult: 1.5, desc: "The crowd is loud. Clock drops to 12s.", color: "#00d4ff" },
+      { level: 3, name: "CHAMPIONS NIGHT", time: 10, mult: 2.0, desc: "High stakes. 10 seconds per call.", color: "#a855f7" },
+      { level: 4, name: "EXTRA TIME", time: 8, mult: 3.0, desc: "Legs are heavy. Only 8 seconds!", color: "#ffb300" },
+      { level: 5, name: "SUDDEN DEATH", time: 6, mult: 5.0, desc: "Ballon d'Or Elite. 6 seconds. Pure instinct.", color: "#ff2e4c" }
+    ];
+
+    const QUESTION_BANK = {
+      1: [
+        { cat: "WORLD CUP", q: "Which country won the 2026 FIFA World Cup, defeating Argentina 1–0 in the final?", opts: ["France", "Spain", "Brazil", "England"], ans: 1, note: "Spain beat Argentina 1–0 after extra time in New York/New Jersey." },
+        { cat: "AWARDS", q: "Which player has won a record 8 Men's Ballon d'Or trophies?", opts: ["Cristiano Ronaldo", "Lionel Messi", "Pelé", "Luka Modrić"], ans: 1, note: "Messi claimed his 8th Ballon d'Or in 2023." },
+        { cat: "CHAMPIONS LEAGUE", q: "Which club holds the all-time record with 15 European Cup / Champions League titles?", opts: ["AC Milan", "Bayern Munich", "Liverpool", "Real Madrid"], ans: 3, note: "Real Madrid won their 15th title in 2024." },
+        { cat: "LAWS OF THE GAME", q: "How many players are on the pitch for ONE team at kickoff in a standard match?", opts: ["10", "11", "12", "9"], ans: 1, note: "10 outfield players plus 1 goalkeeper." },
+        { cat: "AFRICAN FOOTBALL", q: "Which African nation made history in 2022 as the first to reach a World Cup semi-final?", opts: ["Senegal", "Cameroon", "Morocco", "Ghana"], ans: 2, note: "Morocco eliminated Spain and Portugal on their run to the semis." },
+        { cat: "WORLD CUP", q: "Which nation has won the men's FIFA World Cup the most times (5 titles)?", opts: ["Germany", "Italy", "Argentina", "Brazil"], ans: 3, note: "Brazil won in 1958, 1962, 1970, 1994, and 2002." },
+        { cat: "LAWS OF THE GAME", q: "How many yellow cards in a single match automatically result in a red card?", opts: ["1", "2", "3", "4"], ans: 1, note: "Two yellow cards equal a red card." }
+      ],
+      2: [
+        { cat: "AWARDS", q: "Who won the 2026 Men's Ballon d'Or award?", opts: ["Kylian Mbappé", "Lamine Yamal", "Harry Kane", "Rodri"], ans: 2, note: "Harry Kane lifted his first Ballon d'Or in London after a 73-goal season." },
+        { cat: "AFRICAN FOOTBALL", q: "Which nation holds the record for the most Africa Cup of Nations (AFCON) titles with 7?", opts: ["Cameroon", "Nigeria", "Egypt", "Ghana"], ans: 2, note: "Egypt's Pharaohs lead the continent with 7 AFCON trophies." },
+        { cat: "CHAMPIONS LEAGUE", q: "Which club won back-to-back UEFA Champions League trophies in 2025 and 2026?", opts: ["Manchester City", "Paris Saint-Germain", "Real Madrid", "Arsenal"], ans: 1, note: "PSG beat Inter in 2025 and Arsenal on penalties in 2026." },
+        { cat: "CLUB NICKNAMES", q: "Which German giant plays its home matches at Signal Iduna Park (Westfalenstadion)?", opts: ["RB Leipzig", "Bayer Leverkusen", "Borussia Dortmund", "Schalke 04"], ans: 2, note: "Home of the famous 'Yellow Wall'." },
+        { cat: "UEFA EURO", q: "Who scored the late 86th-minute winner for Spain against England in the Euro 2024 final?", opts: ["Nico Williams", "Mikel Oyarzabal", "Dani Olmo", "Álvaro Morata"], ans: 1, note: "Oyarzabal poked home Cucurella's cross to make it 2–1." },
+        { cat: "CHAMPIONS LEAGUE", q: "Who is the all-time leading goalscorer in UEFA Champions League history?", opts: ["Robert Lewandowski", "Karim Benzema", "Lionel Messi", "Cristiano Ronaldo"], ans: 3, note: "Ronaldo leads the competition with 140 goals." },
+        { cat: "CLUB FOOTY", q: "Which Spanish club is nicknamed 'Los Colchoneros' (The Mattress Makers)?", opts: ["Sevilla", "Valencia", "Atlético Madrid", "Athletic Bilbao"], ans: 2, note: "Named for their red-and-white striped kits resembling old mattresses." }
+      ],
+      3: [
+        { cat: "CHAMPIONS LEAGUE", q: "Who is the ONLY player to win the UEFA Champions League with three different clubs?", opts: ["Zlatan Ibrahimović", "Clarence Seedorf", "Toni Kroos", "Samuel Eto'o"], ans: 1, note: "Seedorf won it with Ajax (1995), Real Madrid (1998), and AC Milan (2003, 2007)." },
+        { cat: "AFRICAN LEGENDS", q: "Who is the only African player ever to win the Ballon d'Or?", opts: ["Didier Drogba", "Samuel Eto'o", "George Weah", "Sadio Mané"], ans: 2, note: "Liberian legend George Weah won it in 1995 while at AC Milan." },
+        { cat: "WORLD CUP 2026", q: "Which substitute scored Spain's extra-time winner in the 2026 World Cup final?", opts: ["Ferran Torres", "Lamine Yamal", "Pedri", "Mikel Merino"], ans: 0, note: "Ferran Torres came off the bench to seal Spain's 1–0 victory." },
+        { cat: "GOALKEEPERS", q: "Who is the only goalkeeper in history to have won the Ballon d'Or?", opts: ["Gianluigi Buffon", "Manuel Neuer", "Lev Yashin", "Dino Zoff"], ans: 2, note: "Soviet legend Lev Yashin won the 'Black Spider' Ballon d'Or in 1963." },
+        { cat: "MANAGERS", q: "Who became the first manager to win league titles in all five of Europe's top leagues?", opts: ["Pep Guardiola", "José Mourinho", "Carlo Ancelotti", "Jürgen Klopp"], ans: 2, note: "Ancelotti won Serie A, Premier League, Ligue 1, Bundesliga, and La Liga." },
+        { cat: "AFRICAN LEGENDS", q: "Who is the all-time top goalscorer in Africa Cup of Nations history (18 goals)?", opts: ["Laurent Pokou", "Samuel Eto'o", "Rashidi Yekini", "Didier Drogba"], ans: 1, note: "Cameroon icon Samuel Eto'o netted 18 times across AFCON tournaments." },
+        { cat: "AWARDS", q: "Who won the 2025 Men's Ballon d'Or trophy in Paris?", opts: ["Ousmane Dembélé", "Vinícius Júnior", "Kylian Mbappé", "Jude Bellingham"], ans: 0, note: "French star Ousmane Dembélé claimed the 2025 Ballon d'Or." }
+      ],
+      4: [
+        { cat: "WORLD CUP RECORDS", q: "At 42 years and 39 days old, who remains the oldest player ever to score at a FIFA World Cup?", opts: ["Cristiano Ronaldo", "Roger Milla", "Lionel Messi", "Pepe"], ans: 1, note: "Cameroon's Roger Milla scored at USA 1994 at age 42." },
+        { cat: "STADIUMS", q: "Which stadium in Budapest hosted the 2025–26 UEFA Champions League final?", opts: ["Groupama Arena", "Puskás Aréna", "Ernst Happel Stadion", "Allianz Arena"], ans: 1, note: "Puskás Aréna hosted PSG vs Arsenal on May 30, 2026." },
+        { cat: "UCL FINALS", q: "What was the record-breaking score when PSG beat Inter Milan in the 2025 Champions League final?", opts: ["3–0", "4–1", "5–0", "4–0"], ans: 2, note: "5–0 is the largest winning margin in a Champions League/European Cup final." },
+        { cat: "WORLD CUP RECORDS", q: "Which Turkish striker scored the fastest World Cup goal ever after 11 seconds in 2002?", opts: ["Nihat Kahveci", "Hakan Şükür", "Emre Belözoğlu", "Ilhan Mansiz"], ans: 1, note: "Hakan Şükür scored 11 seconds into the 2002 third-place playoff vs South Korea." },
+        { cat: "AFRICAN RECORDS", q: "Which Egyptian goalkeeper became the oldest player to appear at a World Cup (age 45 in 2018)?", opts: ["Mohamed El Shenawy", "Essam El-Hadary", "Nader El-Sayed", "Ahmed Shobair"], ans: 1, note: "El-Hadary even saved a penalty against Saudi Arabia at 45 years old." },
+        { cat: "EURO HISTORY", q: "In which year did massive underdogs Greece win the UEFA European Championship?", opts: ["2000", "2004", "2008", "1996"], ans: 1, note: "Otto Rehhagel's Greece beat hosts Portugal 1–0 in the Euro 2004 final." },
+        { cat: "EUROPEAN TROPHIES", q: "Which English club won the 2025–26 UEFA Europa League to face PSG in the Super Cup?", opts: ["Tottenham", "Manchester United", "Aston Villa", "Chelsea"], ans: 2, note: "Aston Villa lifted the 2025–26 Europa League trophy." }
+      ],
+      5: [
+        { cat: "SUDDEN DEATH", q: "Against which nation did Roger Milla score his famous record-breaking goal at the 1994 World Cup?", opts: ["Sweden", "Brazil", "Russia", "Colombia"], ans: 2, note: "Milla scored Cameroon's lone goal in a 6–1 defeat to Russia." },
+        { cat: "SUDDEN DEATH", q: "Who scored the opening goal of the 1958 World Cup final, making him the oldest scorer in a World Cup FINAL?", opts: ["Gunnar Gren", "Nils Liedholm", "Ferenc Puskás", "Didi"], ans: 1, note: "Sweden's Nils Liedholm was 35 years and 264 days old against Brazil." },
+        { cat: "SUDDEN DEATH", q: "Which Italian defender won the 2006 Ballon d'Or after captaining Italy to World Cup glory?", opts: ["Paolo Maldini", "Alessandro Nesta", "Fabio Cannavaro", "Andrea Pirlo"], ans: 2, note: "Cannavaro is one of very few defenders ever to win the Ballon d'Or." },
+        { cat: "SUDDEN DEATH", q: "Before Kylian Mbappé in 2022, who was the only player to score a hat-trick in a men's World Cup final?", opts: ["Pelé", "Geoff Hurst", "Gerd Müller", "Mario Kempes"], ans: 1, note: "England's Sir Geoff Hurst hit three against West Germany in 1966." },
+        { cat: "SUDDEN DEATH", q: "Which nation stunned Brazil 2–1 in the famous 1950 'Maracanazo' to win the World Cup?", opts: ["Argentina", "Italy", "Uruguay", "Hungary"], ans: 2, note: "Uruguay silenced nearly 200,000 fans at the Maracanã in Rio." },
+        { cat: "SUDDEN DEATH", q: "Before PSG in 2025, which was the only French club to win the European Cup / Champions League?", opts: ["Lyon", "AS Monaco", "Marseille", "Saint-Étienne"], ans: 2, note: "Olympique de Marseille beat AC Milan 1–0 in the 1993 final." },
+        { cat: "SUDDEN DEATH", q: "Who won Men's Goalkeeper of the Year at the 2026 Ballon d'Or ceremony?", opts: ["Thibaut Courtois", "Unai Simón", "Édouard Mendy", "Emiliano Martínez"], ans: 1, note: "Spain and Athletic Club star Unai Simón took home the 2026 honor." }
+      ]
+    };
+
+    // ==========================================
+    // 2. SYNTHESIZED SOUND ENGINE (Web Audio API)
+    // ==========================================
+    let audioCtx = null;
+    let soundOn = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, duration, type = 'sine', vol = 0.12) {
+      if (!soundOn || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function sfxWhistle() {
+      if (!soundOn || !audioCtx) return;
+      playTone(2650, 0.12, 'triangle', 0.1);
+      setTimeout(() => playTone(2800, 0.25, 'triangle', 0.1), 130);
+    }
+
+    function sfxCorrect() {
+      playTone(523.25, 0.12, 'sine', 0.15);
+      setTimeout(() => playTone(659.25, 0.12, 'sine', 0.15), 90);
+      setTimeout(() => playTone(783.99, 0.25, 'sine', 0.16), 180);
+    }
+
+    function sfxWrong() {
+      playTone(170, 0.22, 'sawtooth', 0.14);
+      setTimeout(() => playTone(130, 0.35, 'sawtooth', 0.14), 140);
+    }
+
+    function sfxTick() {
+      playTone(880, 0.04, 'square', 0.05);
+    }
+
+    // ==========================================
+    // 3. GAME STATE & DOM REFERENCES
+    // ==========================================
+    const QUESTIONS_PER_LEVEL = 3;
+    const TOTAL_LEVELS = 5;
+
+    let state = {
+      levelIdx: 0,
+      qInLevel: 0,
+      totalAsked: 0,
+      correctCount: 0,
+      mistakes: 0,
+      score: 0,
+      streak: 0,
+      bestStreak: 0,
+      usedQuestions: {},
+      currentQ: null,
+      timerInterval: null,
+      timeLeft: 15,
+      maxTime: 15,
+      lastTickSec: -1,
+      locked: false,
+      lifelines: { var: true, time: true, sub: true }
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    const screens = {
+      start: $('startScreen'),
+      splash: $('splashScreen'),
+      game: $('gameScreen'),
+      end: $('endScreen')
+    };
+
+    function showScreen(name) {
+      Object.values(screens).forEach(s => s.classList.remove('active'));
+      screens[name].classList.add('active');
+    }
+
+    function updateBestBanner() {
+      const best = localStorage.getItem('gauntlet_best') || 0;
+      $('bestBanner').textContent = `🏆 Personal Best: ${Number(best).toLocaleString()} pts`;
+    }
+
+    // ==========================================
+    // 4. CORE GAME FLOW
+    // ==========================================
+    function startGame() {
+      initAudio();
+      sfxWhistle();
+
+      state = {
+        levelIdx: 0,
+        qInLevel: 0,
+        totalAsked: 0,
+        correctCount: 0,
+        mistakes: 0,
+        score: 0,
+        streak: 0,
+        bestStreak: 0,
+        usedQuestions: { 1: [], 2: [], 3: [], 4: [], 5: [] },
+        currentQ: null,
+        timerInterval: null,
+        timeLeft: 15,
+        maxTime: 15,
+        lastTickSec: -1,
+        locked: false,
+        lifelines: { var: true, time: true, sub: true }
+      };
+
+      resetCardsUI();
+      updateLifelinesUI();
+      showLevelSplash();
+    }
+
+    function showLevelSplash() {
+      const lvl = LEVELS[state.levelIdx];
+      $('splashTag').textContent = `LEVEL ${lvl.level} OF ${TOTAL_LEVELS}`;
+      $('splashTag').style.color = lvl.color;
+      $('splashTag').style.background = `${lvl.color}22`;
+      $('splashTitle').textContent = lvl.name;
+      $('splashSub').textContent = `${lvl.desc} (Clock: ${lvl.time}s · ${lvl.mult}x Points)`;
+
+      showScreen('splash');
+      setTimeout(() => {
+        showScreen('game');
+        loadNextQuestion();
+      }, 1700);
+    }
+
+    function pickQuestionForLevel(levelNum) {
+      const pool = QUESTION_BANK[levelNum];
+      const used = state.usedQuestions[levelNum];
+      const available = pool
+        .map((q, idx) => ({ q, idx }))
+        .filter(item => !used.includes(item.idx));
+
+      if (available.length === 0) return null;
+      const pick = available[Math.floor(Math.random() * available.length)];
+      used.push(pick.idx);
+      return pick.q;
+    }
+
+    function loadNextQuestion() {
+      clearInterval(state.timerInterval);
+      $('appCard').classList.remove('danger-pulse');
+      state.locked = false;
+
+      const lvl = LEVELS[state.levelIdx];
+      state.currentQ = pickQuestionForLevel(lvl.level);
+      state.maxTime = lvl.time;
+      state.timeLeft = lvl.time;
+      state.lastTickSec = Math.ceil(lvl.time);
+
+      // Update HUD
+      $('hudLevel').textContent = `LVL ${lvl.level} · ${lvl.name}`;
+      $('hudLevel').style.color = lvl.color;
+      const qNum = state.levelIdx * QUESTIONS_PER_LEVEL + state.qInLevel + 1;
+      $('hudProgress').textContent = `Question ${qNum} of ${TOTAL_LEVELS * QUESTIONS_PER_LEVEL}`;
+      $('hudScore').textContent = state.score.toLocaleString();
+      $('hudStreak').textContent = state.streak >= 3 ? `🔥 Streak: ${state.streak}` : `Streak: ${state.streak}`;
+
+      // Render question & options
+      $('qCategory').textContent = state.currentQ.cat;
+      $('qText').textContent = state.currentQ.q;
+
+      const grid = $('optionsGrid');
+      grid.innerHTML = '';
+      const keys = ['A', 'B', 'C', 'D'];
+      state.currentQ.opts.forEach((optText, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.dataset.index = i;
+        btn.innerHTML = `<span class="opt-key">${keys[i]}</span><span>${optText}</span>`;
+        btn.onclick = () => handleAnswer(i);
+        grid.appendChild(btn);
+      });
+
+      const fb = $('feedbackStrip');
+      fb.className = 'feedback-strip';
+      $('feedbackMsg').textContent = '';
+
+      updateLifelinesUI();
+      startTimer();
+    }
+
+    function startTimer() {
+      const startTimestamp = performance.now();
+      let prevTime = startTimestamp;
+
+      state.timerInterval = setInterval(() => {
+        if (state.locked) return;
+        const now = performance.now();
+        const delta = (now - prevTime) / 1000;
+        prevTime = now;
+
+        state.timeLeft = Math.max(0, state.timeLeft - delta);
+        const pct = (state.timeLeft / state.maxTime) * 100;
+
+        $('timerText').textContent = `${state.timeLeft.toFixed(1)}s`;
+        const fill = $('timerFill');
+        fill.style.width = `${pct}%`;
+
+        fill.classList.remove('warn', 'danger');
+        if (state.timeLeft <= 4) {
+          fill.classList.add('danger');
+          $('appCard').classList.add('danger-pulse');
+          $('timerStatus').textContent = "⚠️ HURRY UP!";
+          const secCeil = Math.ceil(state.timeLeft);
+          if (secCeil < state.lastTickSec && secCeil > 0) {
+            state.lastTickSec = secCeil;
+            sfxTick();
+          }
+        } else if (state.timeLeft <= state.maxTime * 0.5) {
+          fill.classList.add('warn');
+          $('timerStatus').textContent = "MATCH CLOCK";
+        } else {
+          $('timerStatus').textContent = "MATCH CLOCK";
+        }
+
+        if (state.timeLeft <= 0) {
+          clearInterval(state.timerInterval);
+          handleTimeout();
+        }
+      }, 50);
+    }
+
+    function handleAnswer(selectedIdx) {
+      if (state.locked) return;
+      state.locked = true;
+      clearInterval(state.timerInterval);
+      $('appCard').classList.remove('danger-pulse');
+
+      state.totalAsked++;
+      const q = state.currentQ;
+      const lvl = LEVELS[state.levelIdx];
+      const buttons = document.querySelectorAll('.opt-btn');
+      buttons.forEach(b => (b.disabled = true));
+
+      const isCorrect = selectedIdx === q.ans;
+      buttons[q.ans].classList.add('correct');
+
+      const fb = $('feedbackStrip');
+      if (isCorrect) {
+        sfxCorrect();
+        state.correctCount++;
+        state.streak++;
+        if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+
+        // Points: base 100 * level multiplier + speed bonus + streak bonus
+        const base = 100 * lvl.mult;
+        const speedBonus = Math.round(state.timeLeft * 12 * lvl.mult);
+        const streakBonus = state.streak > 1 ? state.streak * 25 : 0;
+        const earned = Math.round(base + speedBonus + streakBonus);
+        state.score += earned;
+
+        $('hudScore').textContent = state.score.toLocaleString();
+        $('hudStreak').textContent = state.streak >= 3 ? `🔥 Streak: ${state.streak}` : `Streak: ${state.streak}`;
+
+        fb.className = 'feedback-strip show ok';
+        $('feedbackMsg').textContent = `⚽ GOAL! +${earned} pts — ${q.note}`;
+        advanceTurn(1650);
+      } else {
+        buttons[selectedIdx].classList.add('wrong');
+        registerMistake(`❌ MISS! ${q.note}`);
+      }
+    }
+
+    function handleTimeout() {
+      if (state.locked) return;
+      state.locked = true;
+      $('appCard').classList.remove('danger-pulse');
+
+      state.totalAsked++;
+      const q = state.currentQ;
+      const buttons = document.querySelectorAll('.opt-btn');
+      buttons.forEach(b => (b.disabled = true));
+      buttons[q.ans].classList.add('correct');
+
+      registerMistake(`⏱️ TIME UP! Correct: ${q.opts[q.ans]}`);
+    }
+
+    function registerMistake(msg) {
+      sfxWrong();
+      state.mistakes++;
+      state.streak = 0;
+      $('hudStreak').textContent = `Streak: 0`;
+      updateCardsUI();
+
+      const fb = $('feedbackStrip');
+      fb.className = 'feedback-strip show bad';
+
+      if (state.mistakes === 1) {
+        $('feedbackMsg').textContent = `🟨 YELLOW CARD! ${msg}`;
+      } else if (state.mistakes === 2) {
+        $('feedbackMsg').textContent = `🟨🟨 FINAL WARNING! ${msg}`;
+      } else {
+        $('feedbackMsg').textContent = `🟥 RED CARD! SENT OFF!`;
+      }
+
+      if (state.mistakes >= 3) {
+        setTimeout(() => endGame(false), 1800);
+      } else {
+        advanceTurn(1850);
+      }
+    }
+
+    function advanceTurn(delayMs) {
+      setTimeout(() => {
+        state.qInLevel++;
+        if (state.qInLevel >= QUESTIONS_PER_LEVEL) {
+          state.qInLevel = 0;
+          state.levelIdx++;
+          if (state.levelIdx >= TOTAL_LEVELS) {
+            endGame(true);
+            return;
+          }
+          sfxWhistle();
+          showLevelSplash();
+        } else {
+          loadNextQuestion();
+        }
+      }, delayMs);
+    }
+
+    // ==========================================
+    // 5. LIFELINES & UI HELPERS
+    // ==========================================
+    function resetCardsUI() {
+      ['c1', 'c2', 'c3'].forEach(id => {
+        $(id).className = 'card-slot';
+      });
+    }
+
+    function updateCardsUI() {
+      if (state.mistakes >= 1) $('c1').classList.add('yellow');
+      if (state.mistakes >= 2) $('c2').classList.add('yellow');
+      if (state.mistakes >= 3) $('c3').classList.add('red');
+    }
+
+    function updateLifelinesUI() {
+      $('lifeVar').disabled = !state.lifelines.var || state.locked;
+      $('lifeTime').disabled = !state.lifelines.time || state.locked;
+      $('lifeSub').disabled = !state.lifelines.sub || state.locked;
+    }
+
+    $('lifeVar').onclick = () => {
+      if (!state.lifelines.var || state.locked) return;
+      state.lifelines.var = false;
+      updateLifelinesUI();
+      playTone(620, 0.15, 'sine', 0.12);
+
+      const wrongIndices = [0, 1, 2, 3].filter(i => i !== state.currentQ.ans);
+      // Shuffle and eliminate 2
+      wrongIndices.sort(() => Math.random() - 0.5);
+      const toRemove = wrongIndices.slice(0, 2);
+      const buttons = document.querySelectorAll('.opt-btn');
+      toRemove.forEach(idx => buttons[idx].classList.add('eliminated'));
+    };
+
+    $('lifeTime').onclick = () => {
+      if (!state.lifelines.time || state.locked) return;
+      state.lifelines.time = false;
+      updateLifelinesUI();
+      playTone(740, 0.18, 'triangle', 0.12);
+
+      state.timeLeft += 8;
+      state.maxTime = Math.max(state.maxTime, state.timeLeft);
+      state.lastTickSec = Math.ceil(state.timeLeft);
+      $('appCard').classList.remove('danger-pulse');
+    };
+
+    $('lifeSub').onclick = () => {
+      if (!state.lifelines.sub || state.locked) return;
+      state.lifelines.sub = false;
+      playTone(540, 0.15, 'sine', 0.12);
+      loadNextQuestion();
+    };
+
+    // ==========================================
+    // 6. END GAME & SCOUT REPORT
+    // ==========================================
+    function endGame(wonAll) {
+      clearInterval(state.timerInterval);
+      $('appCard').classList.remove('danger-pulse');
+      sfxWhistle();
+
+      const best = Number(localStorage.getItem('gauntlet_best') || 0);
+      const isNewRecord = state.score > best;
+      if (isNewRecord) {
+        localStorage.setItem('gauntlet_best', state.score);
+      }
+
+      const acc = state.totalAsked > 0
+        ? Math.round((state.correctCount / state.totalAsked) * 100)
+        : 0;
+
+      const reachedLvl = Math.min(state.levelIdx + 1, TOTAL_LEVELS);
+      let rank = "Sunday League Rookie";
+      if (wonAll) rank = "👑 Ballon d'Or Immortal";
+      else if (reachedLvl === 5) rank = "🔥 World Cup Finalist";
+      else if (reachedLvl === 4) rank = "⭐ Champions League Icon";
+      else if (reachedLvl === 3) rank = "⚽ First-Team Regular";
+      else if (reachedLvl === 2) rank = "📋 Academy Graduate";
+
+      $('endBadge').textContent = wonAll ? "🏆" : "🟥";
+      $('endTitle').textContent = wonAll ? "GAUNTLET CONQUERED!" : "SENT OFF! RED CARD";
+      $('endSub').textContent = isNewRecord
+        ? `🎉 NEW RECORD! Rank: ${rank}`
+        : `Scout Rank: ${rank}`;
+
+      $('statScore').textContent = state.score.toLocaleString();
+      $('statLevel').textContent = wonAll ? "Cleared (5/5)" : `Level ${reachedLvl}`;
+      $('statAccuracy').textContent = `${acc}%`;
+      $('statStreak').textContent = state.bestStreak;
+
+      updateBestBanner();
+      showScreen('end');
+    }
+
+    // ==========================================
+    // 7. CONTROLS & KEYBOARD SHORTCUTS
+    // ==========================================
+    $('startBtn').onclick = startGame;
+    $('replayBtn').onclick = startGame;
+
+    $('soundToggle').onclick = () => {
+      initAudio();
+      soundOn = !soundOn;
+      $('soundToggle').textContent = soundOn ? '🔊 Sound ON' : '🔇 Sound OFF';
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (!screens.game.classList.contains('active') || state.locked) return;
+      const map = { '1': 0, '2': 1, '3': 2, '4': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
+      const idx = map[e.key.toLowerCase()];
+      if (idx !== undefined) {
+        const btn = document.querySelector(`.opt-btn[data-index="${idx}"]`);
+        if (btn && !btn.classList.contains('eliminated')) {
+          handleAnswer(idx);
+        }
+      }
+    });
+
+    updateBestBanner();
+  </script>
+</body>
+</html>
